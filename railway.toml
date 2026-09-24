@@ -1,4 +1,5 @@
-# Railway deployment config — Backend (Hono API + Prisma 8)
+[build]
+buildCommand = "npm install --legacy-peer-deps --no-audit --no-fund"
 
 [deploy]
 startCommand = "prisma contract emit && prisma db update --db $DATABASE_URL && npm run start"
