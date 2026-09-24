@@ -1,8 +1,9 @@
 [build]
-buildCommand = "npm install --legacy-peer-deps --no-audit --no-fund"
+builder = "nixpacks"
+buildCommand = "npm install --force --no-audit --no-fund"
 
 [deploy]
-startCommand = "prisma contract emit && prisma db update --db $DATABASE_URL && npm run start"
+startCommand = "npx prisma contract emit && npx prisma db update --db $DATABASE_URL && npm run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 
