@@ -16,7 +16,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npx prisma contract emit && npx prisma db init --db $DATABASE_URL && npx prisma db migrate --db $DATABASE_URL && npm run start"
+startCommand = "prisma contract emit && prisma db init --db $DATABASE_URL && prisma db migrate --db $DATABASE_URL && npm run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 
