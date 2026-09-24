@@ -1,0 +1,12 @@
+
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm ls *)",
+      "Bash(npx prisma *)",
+      "Bash(./node_modules/.bin/prisma generate *)",
+      "Read(//c/Users/86132/AppData/Local/Temp/claude/C--Users-86132-Desktop-daily-sop/d115acbc-509f-41d1-a0d6-397bde963121/tasks/**)"
+    ]
+  }
+}

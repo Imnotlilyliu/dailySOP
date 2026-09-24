@@ -1,0 +1,2149 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.ai_generation_logs",
+    "label": "Create table \"ai_generation_logs\"",
+    "summary": "Creates table \"ai_generation_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ai_generation_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ai_generation_logs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ai_generation_logs\"",
+        "sql": "CREATE TABLE \"public\".\"ai_generation_logs\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"error_message\" text,\n  \"id\" text NOT NULL,\n  \"input_json\" text NOT NULL,\n  \"output_json\" text,\n  \"prompt_id\" character varying(100) NOT NULL,\n  \"prompt_version\" character varying(20) NOT NULL,\n  \"status\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"user_id\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ai_generation_logs_status_check_ef2e9b57\" CHECK (\"status\" IN ('success', 'failure'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ai_generation_logs\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.daily_minimum_actions",
+    "label": "Create table \"daily_minimum_actions\"",
+    "summary": "Creates table \"daily_minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"daily_minimum_actions\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"daily_minimum_actions\"",
+        "sql": "CREATE TABLE \"public\".\"daily_minimum_actions\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"date\" date NOT NULL,\n  \"id\" text NOT NULL,\n  \"minimum_action_id\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"user_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"daily_minimum_actions\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.daily_sop_tasks",
+    "label": "Create table \"daily_sop_tasks\"",
+    "summary": "Creates table \"daily_sop_tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"daily_sop_tasks\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"daily_sop_tasks\"",
+        "sql": "CREATE TABLE \"public\".\"daily_sop_tasks\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"daily_sop_id\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"order_index\" int4 NOT NULL,\n  \"task_id\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"daily_sop_tasks\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.daily_sops",
+    "label": "Create table \"daily_sops\"",
+    "summary": "Creates table \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"daily_sops\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"daily_sops\"",
+        "sql": "CREATE TABLE \"public\".\"daily_sops\" (\n  \"completed_at\" timestamptz,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"date\" date NOT NULL,\n  \"goal_id\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"stage_id\" text NOT NULL,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"user_id\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"daily_sops_status_check_dbabbe3e\" CHECK (\"status\" IN ('pending', 'completed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"daily_sops\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.goals",
+    "label": "Create table \"goals\"",
+    "summary": "Creates table \"goals\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "goals"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"goals\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"goals\"",
+        "sql": "CREATE TABLE \"public\".\"goals\" (\n  \"completed_at\" timestamptz,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"current_stage_id\" text,\n  \"deleted_at\" timestamptz,\n  \"description\" text,\n  \"expected_outcome\" text,\n  \"id\" text NOT NULL,\n  \"start_date\" timestamptz,\n  \"status\" text DEFAULT 'active' NOT NULL,\n  \"target_date\" timestamptz,\n  \"title\" character varying(100) NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"user_id\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"goals_status_check_bc8d8cc9\" CHECK (\"status\" IN ('active', 'paused', 'completed', 'deleted'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"goals\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.learning_paths",
+    "label": "Create table \"learning_paths\"",
+    "summary": "Creates table \"learning_paths\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "learning_paths"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"learning_paths\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"learning_paths\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"learning_paths\"",
+        "sql": "CREATE TABLE \"public\".\"learning_paths\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"order_index\" int4 NOT NULL,\n  \"source_type\" text NOT NULL,\n  \"stage_id\" text NOT NULL,\n  \"title\" character varying(200) NOT NULL,\n  \"type\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"learning_paths_source_type_check_64cb7b7d\" CHECK (\"source_type\" IN ('user', 'ai'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"learning_paths\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"learning_paths\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.minimum_actions",
+    "label": "Create table \"minimum_actions\"",
+    "summary": "Creates table \"minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"minimum_actions\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"minimum_actions\"",
+        "sql": "CREATE TABLE \"public\".\"minimum_actions\" (\n  \"completed_at\" timestamptz,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"daily_sop_id\" text NOT NULL,\n  \"description\" text,\n  \"estimated_minutes\" int4 NOT NULL,\n  \"id\" text NOT NULL,\n  \"task_id\" text NOT NULL,\n  \"title\" character varying(200) NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"minimum_actions\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.prompt_configs",
+    "label": "Create table \"prompt_configs\"",
+    "summary": "Creates table \"prompt_configs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "prompt_configs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"prompt_configs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prompt_configs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"prompt_configs\"",
+        "sql": "CREATE TABLE \"public\".\"prompt_configs\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"input_schema\" text NOT NULL,\n  \"name\" character varying(200) NOT NULL,\n  \"output_schema\" text NOT NULL,\n  \"prompt_id\" character varying(100) NOT NULL,\n  \"rules\" text NOT NULL,\n  \"status\" text DEFAULT 'active' NOT NULL,\n  \"system_prompt\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"version\" character varying(20) NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"prompt_configs_status_check_11063666\" CHECK (\"status\" IN ('active', 'inactive'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"prompt_configs\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prompt_configs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.stages",
+    "label": "Create table \"stages\"",
+    "summary": "Creates table \"stages\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "stages"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"stages\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"stages\"",
+        "sql": "CREATE TABLE \"public\".\"stages\" (\n  \"completed_at\" timestamptz,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration_days\" int4,\n  \"end_date\" timestamptz,\n  \"goal_id\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" character varying(100) NOT NULL,\n  \"order_index\" int4 NOT NULL,\n  \"start_date\" timestamptz,\n  \"status\" text DEFAULT 'not_started' NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"stages_status_check_f5f18e63\" CHECK (\"status\" IN ('not_started', 'in_progress', 'completed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"stages\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.tasks",
+    "label": "Create table \"tasks\"",
+    "summary": "Creates table \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"tasks\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"tasks\"",
+        "sql": "CREATE TABLE \"public\".\"tasks\" (\n  \"completed_at\" timestamptz,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"estimated_minutes\" int4 NOT NULL,\n  \"id\" text NOT NULL,\n  \"learning_path_id\" text,\n  \"order_index\" int4 NOT NULL,\n  \"stage_id\" text NOT NULL,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"title\" character varying(200) NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"tasks_status_check_dbabbe3e\" CHECK (\"status\" IN ('pending', 'completed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"tasks\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.users",
+    "label": "Create table \"users\"",
+    "summary": "Creates table \"users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"users\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"users\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"users\"",
+        "sql": "CREATE TABLE \"public\".\"users\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"users\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"users\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.daily_minimum_actions.daily_minimum_actions_user_id_date_key",
+    "label": "Add unique constraint on \"daily_minimum_actions\" (user_id, date)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "daily_minimum_actions_user_id_date_key",
+        "table": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"daily_minimum_actions_user_id_date_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_user_id_date_key",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"daily_minimum_actions_user_id_date_key\"",
+        "sql": "ALTER TABLE \"public\".\"daily_minimum_actions\" ADD CONSTRAINT \"daily_minimum_actions_user_id_date_key\" UNIQUE (\"user_id\", \"date\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"daily_minimum_actions_user_id_date_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_user_id_date_key",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.daily_sop_tasks.daily_sop_tasks_daily_sop_id_task_id_key",
+    "label": "Add unique constraint on \"daily_sop_tasks\" (daily_sop_id, task_id)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "daily_sop_tasks_daily_sop_id_task_id_key",
+        "table": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"daily_sop_tasks_daily_sop_id_task_id_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_daily_sop_id_task_id_key",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"daily_sop_tasks_daily_sop_id_task_id_key\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sop_tasks\" ADD CONSTRAINT \"daily_sop_tasks_daily_sop_id_task_id_key\" UNIQUE (\"daily_sop_id\", \"task_id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"daily_sop_tasks_daily_sop_id_task_id_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_daily_sop_id_task_id_key",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.daily_sops.daily_sops_goal_id_date_key",
+    "label": "Add unique constraint on \"daily_sops\" (goal_id, date)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "daily_sops_goal_id_date_key",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"daily_sops_goal_id_date_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_goal_id_date_key",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"daily_sops_goal_id_date_key\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sops\" ADD CONSTRAINT \"daily_sops_goal_id_date_key\" UNIQUE (\"goal_id\", \"date\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"daily_sops_goal_id_date_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_goal_id_date_key",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.minimum_actions.minimum_actions_daily_sop_id_key",
+    "label": "Add unique constraint on \"minimum_actions\" (daily_sop_id)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "minimum_actions_daily_sop_id_key",
+        "table": "minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"minimum_actions_daily_sop_id_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_daily_sop_id_key",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"minimum_actions_daily_sop_id_key\"",
+        "sql": "ALTER TABLE \"public\".\"minimum_actions\" ADD CONSTRAINT \"minimum_actions_daily_sop_id_key\" UNIQUE (\"daily_sop_id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"minimum_actions_daily_sop_id_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_daily_sop_id_key",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.prompt_configs.prompt_configs_prompt_id_version_key",
+    "label": "Add unique constraint on \"prompt_configs\" (prompt_id, version)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "prompt_configs_prompt_id_version_key",
+        "table": "prompt_configs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prompt_configs_prompt_id_version_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prompt_configs_prompt_id_version_key",
+          "public",
+          "\"public\".\"prompt_configs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"prompt_configs_prompt_id_version_key\"",
+        "sql": "ALTER TABLE \"public\".\"prompt_configs\" ADD CONSTRAINT \"prompt_configs_prompt_id_version_key\" UNIQUE (\"prompt_id\", \"version\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prompt_configs_prompt_id_version_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prompt_configs_prompt_id_version_key",
+          "public",
+          "\"public\".\"prompt_configs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.users.users_email_key",
+    "label": "Add unique constraint on \"users\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "users_email_key",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"users_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "users_email_key",
+          "public",
+          "\"public\".\"users\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"users_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD CONSTRAINT \"users_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"users_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "users_email_key",
+          "public",
+          "\"public\".\"users\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ai_generation_logs.ai_generation_logs_prompt_id_idx_8d9359e9",
+    "label": "Create index \"ai_generation_logs_prompt_id_idx_8d9359e9\" on \"ai_generation_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ai_generation_logs_prompt_id_idx_8d9359e9",
+        "table": "ai_generation_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ai_generation_logs_prompt_id_idx_8d9359e9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_prompt_id_idx_8d9359e9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ai_generation_logs_prompt_id_idx_8d9359e9\"",
+        "sql": "CREATE INDEX \"ai_generation_logs_prompt_id_idx_8d9359e9\" ON \"public\".\"ai_generation_logs\" (\"prompt_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ai_generation_logs_prompt_id_idx_8d9359e9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_prompt_id_idx_8d9359e9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ai_generation_logs.ai_generation_logs_status_idx_e98638ab",
+    "label": "Create index \"ai_generation_logs_status_idx_e98638ab\" on \"ai_generation_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ai_generation_logs_status_idx_e98638ab",
+        "table": "ai_generation_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ai_generation_logs_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ai_generation_logs_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"ai_generation_logs_status_idx_e98638ab\" ON \"public\".\"ai_generation_logs\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ai_generation_logs_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ai_generation_logs.ai_generation_logs_user_id_idx_6c952402",
+    "label": "Create index \"ai_generation_logs_user_id_idx_6c952402\" on \"ai_generation_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ai_generation_logs_user_id_idx_6c952402",
+        "table": "ai_generation_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ai_generation_logs_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_user_id_idx_6c952402\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ai_generation_logs_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"ai_generation_logs_user_id_idx_6c952402\" ON \"public\".\"ai_generation_logs\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ai_generation_logs_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ai_generation_logs_user_id_idx_6c952402\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_minimum_actions.daily_minimum_actions_minimum_action_id_idx_323d7d46",
+    "label": "Create index \"daily_minimum_actions_minimum_action_id_idx_323d7d46\" on \"daily_minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_minimum_actions_minimum_action_id_idx_323d7d46",
+        "table": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_minimum_actions_minimum_action_id_idx_323d7d46\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions_minimum_action_id_idx_323d7d46\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_minimum_actions_minimum_action_id_idx_323d7d46\"",
+        "sql": "CREATE INDEX \"daily_minimum_actions_minimum_action_id_idx_323d7d46\" ON \"public\".\"daily_minimum_actions\" (\"minimum_action_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_minimum_actions_minimum_action_id_idx_323d7d46\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions_minimum_action_id_idx_323d7d46\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_minimum_actions.daily_minimum_actions_user_id_idx_6c952402",
+    "label": "Create index \"daily_minimum_actions_user_id_idx_6c952402\" on \"daily_minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_minimum_actions_user_id_idx_6c952402",
+        "table": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_minimum_actions_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions_user_id_idx_6c952402\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_minimum_actions_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"daily_minimum_actions_user_id_idx_6c952402\" ON \"public\".\"daily_minimum_actions\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_minimum_actions_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_minimum_actions_user_id_idx_6c952402\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sop_tasks.daily_sop_tasks_daily_sop_id_idx_69efce3a",
+    "label": "Create index \"daily_sop_tasks_daily_sop_id_idx_69efce3a\" on \"daily_sop_tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sop_tasks_daily_sop_id_idx_69efce3a",
+        "table": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sop_tasks_daily_sop_id_idx_69efce3a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks_daily_sop_id_idx_69efce3a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sop_tasks_daily_sop_id_idx_69efce3a\"",
+        "sql": "CREATE INDEX \"daily_sop_tasks_daily_sop_id_idx_69efce3a\" ON \"public\".\"daily_sop_tasks\" (\"daily_sop_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sop_tasks_daily_sop_id_idx_69efce3a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks_daily_sop_id_idx_69efce3a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sop_tasks.daily_sop_tasks_task_id_idx_5d5ac774",
+    "label": "Create index \"daily_sop_tasks_task_id_idx_5d5ac774\" on \"daily_sop_tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sop_tasks_task_id_idx_5d5ac774",
+        "table": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sop_tasks_task_id_idx_5d5ac774\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks_task_id_idx_5d5ac774\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sop_tasks_task_id_idx_5d5ac774\"",
+        "sql": "CREATE INDEX \"daily_sop_tasks_task_id_idx_5d5ac774\" ON \"public\".\"daily_sop_tasks\" (\"task_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sop_tasks_task_id_idx_5d5ac774\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sop_tasks_task_id_idx_5d5ac774\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sops.daily_sops_date_idx_b4ca319c",
+    "label": "Create index \"daily_sops_date_idx_b4ca319c\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sops_date_idx_b4ca319c",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sops_date_idx_b4ca319c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_date_idx_b4ca319c\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sops_date_idx_b4ca319c\"",
+        "sql": "CREATE INDEX \"daily_sops_date_idx_b4ca319c\" ON \"public\".\"daily_sops\" (\"date\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sops_date_idx_b4ca319c\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_date_idx_b4ca319c\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sops.daily_sops_goal_id_idx_d91789ff",
+    "label": "Create index \"daily_sops_goal_id_idx_d91789ff\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sops_goal_id_idx_d91789ff",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sops_goal_id_idx_d91789ff\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_goal_id_idx_d91789ff\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sops_goal_id_idx_d91789ff\"",
+        "sql": "CREATE INDEX \"daily_sops_goal_id_idx_d91789ff\" ON \"public\".\"daily_sops\" (\"goal_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sops_goal_id_idx_d91789ff\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_goal_id_idx_d91789ff\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sops.daily_sops_stage_id_idx_1ce9a73f",
+    "label": "Create index \"daily_sops_stage_id_idx_1ce9a73f\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sops_stage_id_idx_1ce9a73f",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sops_stage_id_idx_1ce9a73f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sops_stage_id_idx_1ce9a73f\"",
+        "sql": "CREATE INDEX \"daily_sops_stage_id_idx_1ce9a73f\" ON \"public\".\"daily_sops\" (\"stage_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sops_stage_id_idx_1ce9a73f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.daily_sops.daily_sops_user_id_idx_6c952402",
+    "label": "Create index \"daily_sops_user_id_idx_6c952402\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "daily_sops_user_id_idx_6c952402",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"daily_sops_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_user_id_idx_6c952402\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"daily_sops_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"daily_sops_user_id_idx_6c952402\" ON \"public\".\"daily_sops\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"daily_sops_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"daily_sops_user_id_idx_6c952402\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goals.goals_status_idx_e98638ab",
+    "label": "Create index \"goals_status_idx_e98638ab\" on \"goals\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goals_status_idx_e98638ab",
+        "table": "goals"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goals_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goals_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"goals_status_idx_e98638ab\" ON \"public\".\"goals\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goals_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goals.goals_user_id_idx_6c952402",
+    "label": "Create index \"goals_user_id_idx_6c952402\" on \"goals\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goals_user_id_idx_6c952402",
+        "table": "goals"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goals_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals_user_id_idx_6c952402\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goals_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"goals_user_id_idx_6c952402\" ON \"public\".\"goals\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goals_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goals_user_id_idx_6c952402\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.learning_paths.learning_paths_stage_id_idx_1ce9a73f",
+    "label": "Create index \"learning_paths_stage_id_idx_1ce9a73f\" on \"learning_paths\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "learning_paths_stage_id_idx_1ce9a73f",
+        "table": "learning_paths"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"learning_paths_stage_id_idx_1ce9a73f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"learning_paths_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"learning_paths_stage_id_idx_1ce9a73f\"",
+        "sql": "CREATE INDEX \"learning_paths_stage_id_idx_1ce9a73f\" ON \"public\".\"learning_paths\" (\"stage_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"learning_paths_stage_id_idx_1ce9a73f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"learning_paths_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.minimum_actions.minimum_actions_task_id_idx_5d5ac774",
+    "label": "Create index \"minimum_actions_task_id_idx_5d5ac774\" on \"minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "minimum_actions_task_id_idx_5d5ac774",
+        "table": "minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"minimum_actions_task_id_idx_5d5ac774\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"minimum_actions_task_id_idx_5d5ac774\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"minimum_actions_task_id_idx_5d5ac774\"",
+        "sql": "CREATE INDEX \"minimum_actions_task_id_idx_5d5ac774\" ON \"public\".\"minimum_actions\" (\"task_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"minimum_actions_task_id_idx_5d5ac774\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"minimum_actions_task_id_idx_5d5ac774\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prompt_configs.prompt_configs_prompt_id_idx_8d9359e9",
+    "label": "Create index \"prompt_configs_prompt_id_idx_8d9359e9\" on \"prompt_configs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prompt_configs_prompt_id_idx_8d9359e9",
+        "table": "prompt_configs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prompt_configs_prompt_id_idx_8d9359e9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prompt_configs_prompt_id_idx_8d9359e9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prompt_configs_prompt_id_idx_8d9359e9\"",
+        "sql": "CREATE INDEX \"prompt_configs_prompt_id_idx_8d9359e9\" ON \"public\".\"prompt_configs\" (\"prompt_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prompt_configs_prompt_id_idx_8d9359e9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prompt_configs_prompt_id_idx_8d9359e9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.stages.stages_goal_id_idx_d91789ff",
+    "label": "Create index \"stages_goal_id_idx_d91789ff\" on \"stages\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "stages_goal_id_idx_d91789ff",
+        "table": "stages"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"stages_goal_id_idx_d91789ff\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages_goal_id_idx_d91789ff\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"stages_goal_id_idx_d91789ff\"",
+        "sql": "CREATE INDEX \"stages_goal_id_idx_d91789ff\" ON \"public\".\"stages\" (\"goal_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"stages_goal_id_idx_d91789ff\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages_goal_id_idx_d91789ff\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.stages.stages_status_idx_e98638ab",
+    "label": "Create index \"stages_status_idx_e98638ab\" on \"stages\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "stages_status_idx_e98638ab",
+        "table": "stages"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"stages_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"stages_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"stages_status_idx_e98638ab\" ON \"public\".\"stages\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"stages_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"stages_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.tasks.tasks_learning_path_id_idx_f51a42d6",
+    "label": "Create index \"tasks_learning_path_id_idx_f51a42d6\" on \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "tasks_learning_path_id_idx_f51a42d6",
+        "table": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"tasks_learning_path_id_idx_f51a42d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_learning_path_id_idx_f51a42d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"tasks_learning_path_id_idx_f51a42d6\"",
+        "sql": "CREATE INDEX \"tasks_learning_path_id_idx_f51a42d6\" ON \"public\".\"tasks\" (\"learning_path_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"tasks_learning_path_id_idx_f51a42d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_learning_path_id_idx_f51a42d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.tasks.tasks_stage_id_idx_1ce9a73f",
+    "label": "Create index \"tasks_stage_id_idx_1ce9a73f\" on \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "tasks_stage_id_idx_1ce9a73f",
+        "table": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"tasks_stage_id_idx_1ce9a73f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"tasks_stage_id_idx_1ce9a73f\"",
+        "sql": "CREATE INDEX \"tasks_stage_id_idx_1ce9a73f\" ON \"public\".\"tasks\" (\"stage_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"tasks_stage_id_idx_1ce9a73f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_stage_id_idx_1ce9a73f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.tasks.tasks_status_idx_e98638ab",
+    "label": "Create index \"tasks_status_idx_e98638ab\" on \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "tasks_status_idx_e98638ab",
+        "table": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"tasks_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"tasks_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"tasks_status_idx_e98638ab\" ON \"public\".\"tasks\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"tasks_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tasks_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ai_generation_logs.ai_generation_logs_user_id_fkey",
+    "label": "Add foreign key \"ai_generation_logs_user_id_fkey\" on \"ai_generation_logs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ai_generation_logs_user_id_fkey",
+        "table": "ai_generation_logs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ai_generation_logs_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ai_generation_logs_user_id_fkey",
+          "public",
+          "\"public\".\"ai_generation_logs\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ai_generation_logs_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ai_generation_logs\"\nADD CONSTRAINT \"ai_generation_logs_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ai_generation_logs_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ai_generation_logs_user_id_fkey",
+          "public",
+          "\"public\".\"ai_generation_logs\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_minimum_actions.daily_minimum_actions_user_id_fkey",
+    "label": "Add foreign key \"daily_minimum_actions_user_id_fkey\" on \"daily_minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_minimum_actions_user_id_fkey",
+        "table": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_minimum_actions_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_user_id_fkey",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_minimum_actions_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_minimum_actions\"\nADD CONSTRAINT \"daily_minimum_actions_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_minimum_actions_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_user_id_fkey",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_minimum_actions.daily_minimum_actions_minimum_action_id_fkey",
+    "label": "Add foreign key \"daily_minimum_actions_minimum_action_id_fkey\" on \"daily_minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_minimum_actions_minimum_action_id_fkey",
+        "table": "daily_minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_minimum_actions_minimum_action_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_minimum_action_id_fkey",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_minimum_actions_minimum_action_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_minimum_actions\"\nADD CONSTRAINT \"daily_minimum_actions_minimum_action_id_fkey\"\nFOREIGN KEY (\"minimum_action_id\")\nREFERENCES \"public\".\"minimum_actions\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_minimum_actions_minimum_action_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_minimum_actions_minimum_action_id_fkey",
+          "public",
+          "\"public\".\"daily_minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_sop_tasks.daily_sop_tasks_daily_sop_id_fkey",
+    "label": "Add foreign key \"daily_sop_tasks_daily_sop_id_fkey\" on \"daily_sop_tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_sop_tasks_daily_sop_id_fkey",
+        "table": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_sop_tasks_daily_sop_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_daily_sop_id_fkey",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_sop_tasks_daily_sop_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sop_tasks\"\nADD CONSTRAINT \"daily_sop_tasks_daily_sop_id_fkey\"\nFOREIGN KEY (\"daily_sop_id\")\nREFERENCES \"public\".\"daily_sops\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_sop_tasks_daily_sop_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_daily_sop_id_fkey",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_sop_tasks.daily_sop_tasks_task_id_fkey",
+    "label": "Add foreign key \"daily_sop_tasks_task_id_fkey\" on \"daily_sop_tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_sop_tasks_task_id_fkey",
+        "table": "daily_sop_tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_sop_tasks_task_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_task_id_fkey",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_sop_tasks_task_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sop_tasks\"\nADD CONSTRAINT \"daily_sop_tasks_task_id_fkey\"\nFOREIGN KEY (\"task_id\")\nREFERENCES \"public\".\"tasks\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_sop_tasks_task_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sop_tasks_task_id_fkey",
+          "public",
+          "\"public\".\"daily_sop_tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_sops.daily_sops_user_id_fkey",
+    "label": "Add foreign key \"daily_sops_user_id_fkey\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_sops_user_id_fkey",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_sops_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_user_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_sops_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sops\"\nADD CONSTRAINT \"daily_sops_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_sops_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_user_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_sops.daily_sops_goal_id_fkey",
+    "label": "Add foreign key \"daily_sops_goal_id_fkey\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_sops_goal_id_fkey",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_sops_goal_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_goal_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_sops_goal_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sops\"\nADD CONSTRAINT \"daily_sops_goal_id_fkey\"\nFOREIGN KEY (\"goal_id\")\nREFERENCES \"public\".\"goals\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_sops_goal_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_goal_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.daily_sops.daily_sops_stage_id_fkey",
+    "label": "Add foreign key \"daily_sops_stage_id_fkey\" on \"daily_sops\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "daily_sops_stage_id_fkey",
+        "table": "daily_sops"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"daily_sops_stage_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_stage_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"daily_sops_stage_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"daily_sops\"\nADD CONSTRAINT \"daily_sops_stage_id_fkey\"\nFOREIGN KEY (\"stage_id\")\nREFERENCES \"public\".\"stages\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"daily_sops_stage_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "daily_sops_stage_id_fkey",
+          "public",
+          "\"public\".\"daily_sops\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.goals.goals_user_id_fkey",
+    "label": "Add foreign key \"goals_user_id_fkey\" on \"goals\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "goals_user_id_fkey",
+        "table": "goals"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"goals_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "goals_user_id_fkey",
+          "public",
+          "\"public\".\"goals\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"goals_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"goals\"\nADD CONSTRAINT \"goals_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"goals_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "goals_user_id_fkey",
+          "public",
+          "\"public\".\"goals\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.learning_paths.learning_paths_stage_id_fkey",
+    "label": "Add foreign key \"learning_paths_stage_id_fkey\" on \"learning_paths\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "learning_paths_stage_id_fkey",
+        "table": "learning_paths"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"learning_paths_stage_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "learning_paths_stage_id_fkey",
+          "public",
+          "\"public\".\"learning_paths\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"learning_paths_stage_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"learning_paths\"\nADD CONSTRAINT \"learning_paths_stage_id_fkey\"\nFOREIGN KEY (\"stage_id\")\nREFERENCES \"public\".\"stages\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"learning_paths_stage_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "learning_paths_stage_id_fkey",
+          "public",
+          "\"public\".\"learning_paths\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.minimum_actions.minimum_actions_daily_sop_id_fkey",
+    "label": "Add foreign key \"minimum_actions_daily_sop_id_fkey\" on \"minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "minimum_actions_daily_sop_id_fkey",
+        "table": "minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"minimum_actions_daily_sop_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_daily_sop_id_fkey",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"minimum_actions_daily_sop_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"minimum_actions\"\nADD CONSTRAINT \"minimum_actions_daily_sop_id_fkey\"\nFOREIGN KEY (\"daily_sop_id\")\nREFERENCES \"public\".\"daily_sops\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"minimum_actions_daily_sop_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_daily_sop_id_fkey",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.minimum_actions.minimum_actions_task_id_fkey",
+    "label": "Add foreign key \"minimum_actions_task_id_fkey\" on \"minimum_actions\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "minimum_actions_task_id_fkey",
+        "table": "minimum_actions"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"minimum_actions_task_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_task_id_fkey",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"minimum_actions_task_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"minimum_actions\"\nADD CONSTRAINT \"minimum_actions_task_id_fkey\"\nFOREIGN KEY (\"task_id\")\nREFERENCES \"public\".\"tasks\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"minimum_actions_task_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "minimum_actions_task_id_fkey",
+          "public",
+          "\"public\".\"minimum_actions\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.stages.stages_goal_id_fkey",
+    "label": "Add foreign key \"stages_goal_id_fkey\" on \"stages\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "stages_goal_id_fkey",
+        "table": "stages"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"stages_goal_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "stages_goal_id_fkey",
+          "public",
+          "\"public\".\"stages\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"stages_goal_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"stages\"\nADD CONSTRAINT \"stages_goal_id_fkey\"\nFOREIGN KEY (\"goal_id\")\nREFERENCES \"public\".\"goals\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"stages_goal_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "stages_goal_id_fkey",
+          "public",
+          "\"public\".\"stages\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.tasks.tasks_stage_id_fkey",
+    "label": "Add foreign key \"tasks_stage_id_fkey\" on \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "tasks_stage_id_fkey",
+        "table": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"tasks_stage_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tasks_stage_id_fkey",
+          "public",
+          "\"public\".\"tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"tasks_stage_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"tasks\"\nADD CONSTRAINT \"tasks_stage_id_fkey\"\nFOREIGN KEY (\"stage_id\")\nREFERENCES \"public\".\"stages\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"tasks_stage_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tasks_stage_id_fkey",
+          "public",
+          "\"public\".\"tasks\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.tasks.tasks_learning_path_id_fkey",
+    "label": "Add foreign key \"tasks_learning_path_id_fkey\" on \"tasks\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "tasks_learning_path_id_fkey",
+        "table": "tasks"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"tasks_learning_path_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tasks_learning_path_id_fkey",
+          "public",
+          "\"public\".\"tasks\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"tasks_learning_path_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"tasks\"\nADD CONSTRAINT \"tasks_learning_path_id_fkey\"\nFOREIGN KEY (\"learning_path_id\")\nREFERENCES \"public\".\"learning_paths\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"tasks_learning_path_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tasks_learning_path_id_fkey",
+          "public",
+          "\"public\".\"tasks\""
+        ]
+      }
+    ]
+  }
+]

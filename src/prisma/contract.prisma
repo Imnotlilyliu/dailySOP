@@ -1,0 +1,284 @@
+// use prisma-8
+// Prisma 8 Contract Schema - daily-sop
+// 表名（@@map）遵循 CLAUDE.md 第 7 节命名；
+// 模型名采用 PascalCase（Prisma 8 约定），列名通过 @map 使用 snake_case。
+
+// ============================================================
+// Enums — 对应 CLAUDE.md 第 4 节定义的状态机
+// ============================================================
+
+enum GoalStatus {
+  @@type("pg/text@1")
+  active    = "active"
+  paused    = "paused"
+  completed = "completed"
+  deleted   = "deleted"
+}
+
+enum StageStatus {
+  @@type("pg/text@1")
+  not_started = "not_started"
+  in_progress = "in_progress"
+  completed   = "completed"
+}
+
+enum TaskStatus {
+  @@type("pg/text@1")
+  pending   = "pending"
+  completed = "completed"
+}
+
+enum SopStatus {
+  @@type("pg/text@1")
+  pending   = "pending"
+  completed = "completed"
+}
+
+enum PromptStatus {
+  @@type("pg/text@1")
+  active   = "active"
+  inactive = "inactive"
+}
+
+enum AiLogStatus {
+  @@type("pg/text@1")
+  success = "success"
+  failure = "failure"
+}
+
+enum LearningPathSource {
+  @@type("pg/text@1")
+  user = "user"
+  ai   = "ai"
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id        String                  @id @default(uuid())
+  email     String?                 @unique
+  name      String
+  createdAt temporal.createdAtString() @map("created_at")
+  updatedAt temporal.updatedAtString() @map("updated_at")
+
+  goals               Goal[]
+  dailySops           DailySop[]
+  dailyMinimumActions DailyMinimumAction[]
+  aiGenerationLogs    AiGenerationLog[]
+
+  @@map("users")
+}
+
+model Goal {
+  id              String      @id @default(uuid())
+  title           VarChar(100)
+  description     String?
+  expectedOutcome String?     @map("expected_outcome")
+  status          GoalStatus  @default(active)
+  startDate       TimestamptzString? @map("start_date")
+  targetDate      TimestamptzString? @map("target_date")
+  // CLAUDE.md: 一个 Goal 同时只有一个 current_stage
+  currentStageId  String?     @map("current_stage_id")
+  userId          String      @map("user_id")
+  createdAt       temporal.createdAtString() @map("created_at")
+  updatedAt       temporal.updatedAtString() @map("updated_at")
+  completedAt     TimestamptzString? @map("completed_at")
+  // CLAUDE.md: 软删除
+  deletedAt       TimestamptzString? @map("deleted_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stages    Stage[]
+  dailySops DailySop[]
+
+  // CLAUDE.md: 删除Goal时同时清理关联数据
+  @@index([userId])
+  @@index([status])
+  @@map("goals")
+}
+
+model Stage {
+  id           String       @id @default(uuid())
+  name         VarChar(100)
+  description  String?
+  orderIndex   Int          @map("order_index")
+  durationDays Int?         @map("duration_days")
+  startDate    TimestamptzString? @map("start_date")
+  endDate      TimestamptzString? @map("end_date")
+  status       StageStatus  @default(not_started)
+  goalId       String       @map("goal_id")
+  completedAt  TimestamptzString? @map("completed_at")
+  createdAt    temporal.createdAtString() @map("created_at")
+  updatedAt    temporal.updatedAtString() @map("updated_at")
+
+  goal          Goal           @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  learningPaths LearningPath[]
+  tasks         Task[]
+
+  @@index([goalId])
+  @@index([status])
+  @@map("stages")
+}
+
+model LearningPath {
+  id          String              @id @default(uuid())
+  title       VarChar(200)
+  type        String
+  description String?
+  sourceType  LearningPathSource  @map("source_type")
+  orderIndex  Int                 @map("order_index")
+  stageId     String              @map("stage_id")
+  createdAt   temporal.createdAtString() @map("created_at")
+  updatedAt   temporal.updatedAtString() @map("updated_at")
+
+  stage Stage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([stageId])
+  @@map("learning_paths")
+}
+
+model Task {
+  id               String      @id @default(uuid())
+  stageId          String      @map("stage_id")
+  learningPathId   String?     @map("learning_path_id")
+  title            VarChar(200)
+  description      String?
+  estimatedMinutes Int         @map("estimated_minutes")
+  orderIndex       Int         @map("order_index")
+  status           TaskStatus  @default(pending)
+  completedAt      TimestamptzString? @map("completed_at")
+  createdAt        temporal.createdAtString() @map("created_at")
+  updatedAt        temporal.updatedAtString() @map("updated_at")
+
+  stage         Stage         @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  learningPath  LearningPath? @relation(fields: [learningPathId], references: [id], onDelete: SetNull)
+  dailySopTasks DailySopTask[]
+  minimumActions MinimumAction[]
+
+  @@index([stageId])
+  @@index([learningPathId])
+  @@index([status])
+  @@map("tasks")
+}
+
+model DailySop {
+  id          String     @id @default(uuid())
+  goalId      String     @map("goal_id")
+  stageId     String     @map("stage_id")
+  // CLAUDE.md: 同一个 Goal 同一天只能有一个 SOP（依靠 @@unique 保证）
+  // 使用 DateString 避免 Temporal polyfill 依赖
+  date        DateString
+  status      SopStatus  @default(pending)
+  userId      String     @map("user_id")
+  createdAt   temporal.createdAtString() @map("created_at")
+  updatedAt   temporal.updatedAtString() @map("updated_at")
+  completedAt TimestamptzString? @map("completed_at")
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal           Goal           @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  stage          Stage          @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  dailySopTasks  DailySopTask[]
+  minimumActions MinimumAction[]
+
+  // CLAUDE.md: 同一个 Goal 同一天只能有一个 SOP
+  @@unique([goalId, date])
+  @@index([userId])
+  @@index([stageId])
+  @@index([date])
+  @@map("daily_sops")
+}
+
+model DailySopTask {
+  id          String @id @default(uuid())
+  dailySopId  String @map("daily_sop_id")
+  taskId      String @map("task_id")
+  orderIndex  Int    @map("order_index")
+  createdAt   temporal.createdAtString() @map("created_at")
+  updatedAt   temporal.updatedAtString() @map("updated_at")
+
+  dailySop DailySop @relation(fields: [dailySopId], references: [id], onDelete: Cascade)
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // 复合唯一约束：同一个 SOP 不重复关联同一个 Task
+  @@unique([dailySopId, taskId])
+  @@index([taskId])
+  @@map("daily_sop_tasks")
+}
+
+model MinimumAction {
+  id               String     @id @default(uuid())
+  dailySopId       String     @map("daily_sop_id")
+  taskId           String     @map("task_id")
+  title            VarChar(200)
+  description      String?
+  estimatedMinutes Int        @map("estimated_minutes")
+  completedAt      TimestamptzString? @map("completed_at")
+  createdAt        temporal.createdAtString() @map("created_at")
+  updatedAt        temporal.updatedAtString() @map("updated_at")
+
+  dailySop DailySop @relation(fields: [dailySopId], references: [id], onDelete: Cascade)
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // CLAUDE.md: 一个 SOP 只能有一个最小动作（必填 daily_sop_id 保证 NULL 不绕过唯一约束）
+  @@unique([dailySopId])
+  @@index([taskId])
+  @@map("minimum_actions")
+}
+
+model DailyMinimumAction {
+  id              String @id @default(uuid())
+  userId          String @map("user_id")
+  date            DateString
+  minimumActionId String @map("minimum_action_id")
+  createdAt       temporal.createdAtString() @map("created_at")
+  updatedAt       temporal.updatedAtString() @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  minimumAction MinimumAction  @relation(fields: [minimumActionId], references: [id], onDelete: Cascade)
+
+  // CLAUDE.md: 每个用户每天只有 1 个全局最小动作
+  @@unique([userId, date])
+  @@index([minimumActionId])
+  @@map("daily_minimum_actions")
+}
+
+model PromptConfig {
+  id           String        @id @default(uuid())
+  promptId     VarChar(100)  @map("prompt_id")
+  version      VarChar(20)   @map("version")
+  name         VarChar(200)
+  systemPrompt String        @map("system_prompt")
+  inputSchema  String        @map("input_schema")
+  outputSchema String        @map("output_schema")
+  rules        String
+  status       PromptStatus  @default(active)
+  createdAt    temporal.createdAtString() @map("created_at")
+  updatedAt    temporal.updatedAtString() @map("updated_at")
+
+  // 一个 prompt_id 的同一 version 只能有一条配置
+  @@unique([promptId, version])
+  @@index([promptId])
+  @@map("prompt_configs")
+}
+
+model AiGenerationLog {
+  id            String       @id @default(uuid())
+  userId        String?      @map("user_id")
+  promptId      VarChar(100) @map("prompt_id")
+  promptVersion VarChar(20)  @map("prompt_version")
+  inputJson     String       @map("input_json")
+  outputJson    String?      @map("output_json")
+  status        AiLogStatus
+  errorMessage  String?      @map("error_message")
+  createdAt     temporal.createdAtString() @map("created_at")
+  updatedAt     temporal.updatedAtString() @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([promptId])
+  @@index([status])
+  @@map("ai_generation_logs")
+}

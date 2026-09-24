@@ -1,0 +1,23 @@
+# Railway deployment config — Frontend (Next.js)
+#
+# 部署步骤：
+#   1. Railway 自动 npm install（Nixpacks 自动检测 Next.js）
+#   2. build 阶段：next build
+#   3. deploy 阶段：next start
+#
+# 必须在 Railway Dashboard 配置的环境变量：
+#   - NEXT_PUBLIC_API_URL=https://daily-sop-api.up.railway.app
+#   - NODE_ENV=production
+#   - PORT=3000（Railway 自动注入）
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 30
+
+[[deploy.restart]]
+disable = false
+maxRetries = 3

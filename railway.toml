@@ -1,0 +1,25 @@
+# Railway deployment config — Backend (Hono API + Prisma 8)
+#
+# 部署步骤：
+#   1. Railway 自动 npm install（Nixpacks 默认）
+#   2. build 阶段：emit Prisma contract + 类型检查
+#   3. deploy 阶段：跑 migrations → 启动 server
+#
+# 必须在 Railway Dashboard 配置的环境变量：
+#   - DATABASE_URL     （Railway Postgres 插件自动注入）
+#   - JWT_SECRET        （随机 32 字符以上字符串）
+#   - CORS_ORIGIN       （前端域名，如 https://daily-sop-web.up.railway.app）
+#   - API_BASE_URL      （后端公网 URL，如 https://daily-sop-api.up.railway.app）
+#   - NODE_ENV=production
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npx prisma contract emit && npx prisma db init --db $DATABASE_URL && npx prisma db migrate --db $DATABASE_URL && npm run start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+[[deploy.restart]]
+disable = false
+maxRetries = 3
