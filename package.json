@@ -13,6 +13,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "20.x"
+  },
   "type": "commonjs",
   "dependencies": {
     "@hono/node-server": "^2.1.1",
