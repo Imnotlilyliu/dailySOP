@@ -27,15 +27,12 @@ const app = new OpenAPIHono({
   },
 });
 
-// CORS：允许前端跨域调用 API
-//   开发：http://localhost:3001
-//   生产：通过 CORS_ORIGIN 环境变量配置（逗号分隔多域名）
-const corsOrigins = (process.env['CORS_ORIGIN'] ?? 'http://localhost:3001,http://127.0.0.1:3001')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+const corsOriginsRaw = process.env['CORS_ORIGIN'] ?? '*';
+const corsOrigins = corsOriginsRaw.trim() === '*'
+  ? '*'
+  : corsOriginsRaw.split(',').map((s) => s.trim()).filter(Boolean);
 
-app.use('/api/*', cors({
+app.use('*', cors({
   origin: corsOrigins,
   allowHeaders: ['Content-Type', 'X-User-Id', 'Authorization'],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
