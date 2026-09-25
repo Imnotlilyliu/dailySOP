@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { api, type Goal, type Stage } from "@/lib/api";
-import { GoalCreator } from "@/components/GoalCreator";
+import { GoalWizard } from "@/components/GoalWizard";
 import { StageGenerator } from "@/components/StageGenerator";
 
 async function loadGoals(): Promise<Goal[]> {
@@ -27,6 +27,7 @@ async function loadStages(goalId: string): Promise<Stage[]> {
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[] | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const reload = useCallback(async () => {
     setGoals(await loadGoals());
@@ -41,6 +42,7 @@ export default function GoalsPage() {
   }
 
   const activeGoals = goals.filter((g) => g.status === "active");
+  const atCapacity = activeGoals.length >= 3;
 
   return (
     <div className="space-y-6">
@@ -51,7 +53,28 @@ export default function GoalsPage() {
         </p>
       </header>
 
-      <GoalCreator disabled={activeGoals.length >= 3} />
+      {wizardOpen ? (
+        <GoalWizard
+          onComplete={() => { setWizardOpen(false); reload(); }}
+          onCancel={() => setWizardOpen(false)}
+        />
+      ) : (
+        <section className="rounded-xl border border-dashed border-border p-4 text-center">
+          {atCapacity ? (
+            <p className="text-sm text-muted-foreground py-2">
+              已有 3 个进行中的目标，先暂停或完成一个再来创建。
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setWizardOpen(true)}
+              className="rounded-full bg-primary text-primary-foreground px-5 py-2 text-sm font-medium hover:opacity-90"
+            >
+              + 创建目标
+            </button>
+          )}
+        </section>
+      )}
 
       <section>
         <h2 className="text-sm font-medium text-muted-foreground mb-3">
