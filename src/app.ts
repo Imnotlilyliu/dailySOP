@@ -15,13 +15,19 @@ import { authRouter } from './routes/auth/auth.routes';
 import { Errors, httpStatusFor } from './lib/response';
 
 const app = new OpenAPIHono({
-  // 统一 Zod 校验失败响应格式，对齐 src/types/api.ts 契约
   defaultHook: (result, c) => {
     if (!result.success) {
-      const error = Errors.validation('请求参数校验失败', result.error.issues.map((issue) => ({
+      const issues = result.error.issues.map((issue) => ({
         field: issue.path.join('.'),
         message: issue.message,
-      })));
+        code: issue.code,
+      }));
+      console.error('[Zod Validation]', {
+        method: c.req.method,
+        path: c.req.path,
+        issues,
+      });
+      const error = Errors.validation('请求参数校验失败', issues);
       return c.json({ success: false, error }, httpStatusFor(error.code));
     }
   },
@@ -39,6 +45,15 @@ app.use('*', cors({
   exposeHeaders: ['Content-Type'],
   maxAge: 86400,
 }));
+
+app.use('*', async (c, next) => {
+  const auth = c.req.header('Authorization');
+  const hasAuth = auth?.startsWith('Bearer ');
+  const method = c.req.method;
+  const path = c.req.path;
+  console.log('[Request]', { method, path, hasAuth, ua: c.req.header('user-agent')?.slice(0, 60) });
+  await next();
+});
 
 // 健康检查
 app.get('/health', (c) => c.json({ status: 'ok' }));
