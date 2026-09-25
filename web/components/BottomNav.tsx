@@ -1,4 +1,3 @@
-// web/components/BottomNav.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,8 +6,8 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/", label: "今日" },
   { href: "/goals", label: "目标" },
-  { href: "/route", label: "路线" },
-  { href: "/progress", label: "进度" },
+  { href: "/record", label: "记录" },
+  { href: "/me", label: "我的" },
 ] as const;
 
 export function BottomNav() {
@@ -24,7 +23,7 @@ export function BottomNav() {
               href={tab.href}
               className={`flex items-center justify-center py-3 text-sm font-medium transition-colors ${
                 active
-                  ? "text-accent"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

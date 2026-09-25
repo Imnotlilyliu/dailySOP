@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   api,
   getStoredToken,
@@ -10,7 +11,6 @@ import {
   type DailySop,
   type AiMinimumActionResult,
 } from '@/lib/api';
-import { TaskItem } from '@/components/TaskItem';
 
 interface GoalBundle {
   goal: Goal;
@@ -78,17 +78,25 @@ async function loadData(): Promise<LoadResult> {
   }
 }
 
+function formatDate(d: string) {
+  const date = new Date(d + 'T00:00:00');
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  return `${date.getMonth() + 1}月${date.getDate()}日 · 周${weekDays[date.getDay()]}`;
+}
+
 export default function HomePage() {
+  const router = useRouter();
   const [state, setState] = useState<LoadResult>({ kind: 'loading' });
-  const [expanded, setExpanded] = useState(false);
+  const [started, setStarted] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [minimumAction, setMinimumAction] = useState<AiMinimumActionResult | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const reload = useCallback(async () => {
     setState({ kind: 'loading' });
     setMinimumAction(null);
-    setExpanded(false);
+    setStarted(false);
     setState(await loadData());
   }, []);
 
@@ -100,7 +108,6 @@ export default function HomePage() {
     reload();
   }, [reload]);
 
-  // AI 选最小动作 — 等数据加载完 + 有 pending tasks 时触发
   useEffect(() => {
     if (state.kind !== 'ok') return;
     if (minimumAction) return;
@@ -129,64 +136,27 @@ export default function HomePage() {
 
     api
       .post<AiMinimumActionResult>('/api/ai/minimum-action/generate', payload)
-      .then((res) => {
-        setMinimumAction(res);
-      })
-      .catch((e) => {
-        setAiError((e as Error).message);
-      })
-      .finally(() => {
-        setAiLoading(false);
-      });
+      .then((res) => setMinimumAction(res))
+      .catch((e) => setAiError((e as Error).message))
+      .finally(() => setAiLoading(false));
   }, [state, minimumAction]);
 
-  async function regenerate() {
-    if (state.kind !== 'ok') return;
-    const allPendingIds: string[] = [];
-    let firstStageId: string | null = null;
-    for (const b of state.bundles) {
-      for (const t of b.tasks) {
-        if (t.status === 'pending') {
-          allPendingIds.push(t.id);
-          if (!firstStageId) firstStageId = b.stage.id;
-        }
-      }
-    }
-    if (allPendingIds.length === 0) return;
-    setAiLoading(true);
-    setAiError(null);
-    const payload: any = { date: state.today, candidateTaskIds: allPendingIds };
-    if (firstStageId) payload.stageId = firstStageId;
-    try {
-      const res = await api.post<AiMinimumActionResult>(
-        '/api/ai/minimum-action/generate',
-        payload,
-      );
-      setMinimumAction(res);
-    } catch (e) {
-      setAiError((e as Error).message);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
   if (state.kind === 'loading') {
-    return <div className="text-center py-12 text-muted-foreground">加载中...</div>;
+    return <div className="text-center py-16 text-muted-foreground">加载中...</div>;
   }
 
   if (state.kind === 'unauth') {
     return (
       <div className="text-center py-16">
-        <h1 className="text-2xl font-semibold mb-3">欢迎使用 Daily SOP</h1>
-        <p className="text-muted-foreground mb-2">请先登录（顶部右上角「邮箱登录」）。</p>
-        <p className="text-xs text-muted-foreground/70">登录后会自动创建账户，无需密码。</p>
+        <h1 className="text-2xl font-semibold mb-3">Daily SOP</h1>
+        <p className="text-muted-foreground">请先登录（顶部右上角「邮箱登录」）。</p>
       </div>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-16 text-muted-foreground">
         <p>加载失败：{state.message}</p>
         <button
           type="button"
@@ -201,14 +171,14 @@ export default function HomePage() {
 
   if (state.kind === 'no-goal') {
     return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-semibold mb-3">今天还没有目标</h1>
-        <p className="text-muted-foreground mb-8">先去「目标」创建一个想做的事，再回到这里看今天做什么。</p>
+      <div className="text-center py-20">
+        <h1 className="text-3xl font-semibold mb-3">今天还没有目标</h1>
+        <p className="text-muted-foreground mb-8">先创建一个想做的事。</p>
         <a
           href="/goals"
-          className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium"
+          className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-6 py-3 text-sm font-medium"
         >
-          去创建目标
+          创建目标
         </a>
       </div>
     );
@@ -222,119 +192,164 @@ export default function HomePage() {
       if (t.status === 'pending') allPending.push({ bundle: b, task: t });
     }
   }
-
-  const groupedByGoal: Record<string, { bundle: GoalBundle; tasks: Task[] }> = {};
-  for (const b of bundles) {
-    groupedByGoal[b.goal.id] = { bundle: b, tasks: b.tasks.filter((t) => t.status === 'pending') };
-  }
+  const allDone = allPending.length === 0;
 
   const minimumActionTask = minimumAction
     ? allPending.find((x) => x.task.id === minimumAction.taskId)
     : null;
 
-  const totalPendingMinutes = allPending.reduce((s, x) => s + x.task.estimatedMinutes, 0);
-  const allDone = allPending.length === 0;
+  const groupedByGoal: Record<string, { bundle: GoalBundle; pending: Task[] }> = {};
+  for (const b of bundles) {
+    groupedByGoal[b.goal.id] = { bundle: b, pending: b.tasks.filter((t) => t.status === 'pending') };
+  }
+
+  async function toggleTask(task: Task) {
+    try {
+      if (task.status === 'pending') {
+        await api.post(`/api/tasks/${task.id}/complete`);
+      } else {
+        await api.post(`/api/tasks/${task.id}/uncomplete`);
+      }
+      reload();
+    } catch (e) {
+      // 静默
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-xs text-muted-foreground">{today}</p>
-        <h1 className="text-2xl font-semibold mt-1">今天做什么？</h1>
+    <div className="space-y-10 pb-8">
+      <header className="pt-2">
+        <p className="text-sm text-muted-foreground">{formatDate(today)}</p>
+        <h1 className="text-3xl font-semibold mt-2">
+          {allDone ? '今天完成啦' : '现在做什么'}
+        </h1>
       </header>
 
-      {/* 最小动作卡片 — 默认显示 */}
-      <section className="rounded-xl border border-accent/40 bg-accent/5 p-4">
-        <p className="text-xs text-muted-foreground">今日只做这一件事</p>
-
+      {/* 核心行动 —— 唯一主 CTA */}
+      <section>
         {allDone ? (
-          <>
-            <p className="text-lg font-medium mt-2">今天的任务都完成啦 🎉</p>
-            <p className="text-xs text-muted-foreground mt-1">休息一下，或者去「目标」页加一个新目标。</p>
-          </>
+          <div className="rounded-2xl border border-border bg-muted/30 p-8 text-center">
+            <p className="text-5xl mb-4">🎉</p>
+            <p className="text-lg font-medium">今天的事都做完了</p>
+            <p className="text-sm text-muted-foreground mt-2">休息一下，或者去「目标」加一个新方向。</p>
+          </div>
         ) : aiLoading ? (
-          <p className="text-sm text-muted-foreground mt-2">AI 正在帮你挑一件先做的...</p>
+          <div className="rounded-2xl border border-border p-8 text-center">
+            <p className="text-muted-foreground">正在为你挑一件先做的...</p>
+          </div>
         ) : aiError ? (
-          <>
-            <p className="text-sm text-red-500 mt-2">AI 不可用：{aiError}</p>
-            <button
-              type="button"
-              onClick={regenerate}
-              className="mt-2 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
-            >
-              重试
-            </button>
-          </>
+          <div className="rounded-2xl border border-border p-8 text-center">
+            <p className="text-red-500 text-sm">AI 暂不可用</p>
+          </div>
         ) : minimumAction ? (
-          <>
-            <p className="text-lg font-medium mt-2">{minimumAction.title}</p>
-            {minimumAction.description && (
-              <p className="text-xs text-muted-foreground mt-1">{minimumAction.description}</p>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              预计 {minimumAction.estimatedMinutes} 分钟
-              {minimumActionTask && (
-                <> · {minimumActionTask.bundle.goal.title}</>
+          <div className="rounded-2xl border border-foreground/10 bg-muted/20 p-6 space-y-5">
+            <div>
+              <p className="text-xs text-muted-foreground tracking-wide">现在只做这一件事</p>
+              <p className="text-2xl font-semibold mt-3 leading-snug">
+                {minimumAction.title}
+              </p>
+              {minimumAction.description && (
+                <p className="text-sm text-muted-foreground mt-2">{minimumAction.description}</p>
               )}
-            </p>
+            </div>
 
-            <div className="mt-3 flex gap-2 flex-wrap">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>⏱ 约 {minimumAction.estimatedMinutes} 分钟</span>
+              {minimumActionTask && (
+                <>
+                  <span>·</span>
+                  <span>{minimumActionTask.bundle.goal.title}</span>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setExpanded(true)}
-                className="rounded-full bg-primary text-primary-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90"
+                onClick={() => setStarted(true)}
+                className="flex-1 rounded-full bg-foreground text-background py-3 text-base font-medium hover:opacity-90"
               >
-                开始 →
+                开始
               </button>
               <button
                 type="button"
-                onClick={regenerate}
-                disabled={aiLoading}
-                className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                onClick={() => setHelpOpen(true)}
+                className="rounded-full border border-border px-4 py-3 text-sm hover:bg-muted"
               >
-                换一个
+                不知道怎么做
               </button>
             </div>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground mt-2">准备中...</p>
-        )}
+          </div>
+        ) : null}
       </section>
 
-      {/* 完整 SOP — 点击开始后展开 */}
-      {expanded && !allDone && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              今日 SOP · 共 {allPending.length} 件事 · 约 {totalPendingMinutes} 分钟
-            </p>
+      {/* 展开后的完整今日任务 */}
+      {started && !allDone && (
+        <section className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            今日 · 共 {allPending.length} 件事
+          </p>
+
+          {Object.values(groupedByGoal).map(({ bundle, pending }) => (
+            <div key={bundle.goal.id} className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {bundle.goal.title} · {bundle.stage.name}
+              </p>
+              {pending.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => toggleTask(t)}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:bg-muted/30 text-left transition-colors"
+                >
+                  <span className="h-5 w-5 shrink-0 rounded-full border border-border" />
+                  <span className="flex-1 text-sm">{t.title}</span>
+                  <span className="text-xs text-muted-foreground">{t.estimatedMinutes}分</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* 不知道怎么做 — 极简状态 UI */}
+      {helpOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-background/80 flex items-end"
+          onClick={() => setHelpOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl mx-auto bg-background border-t border-border rounded-t-2xl p-6 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-medium mb-2">遇到困难了？</p>
+            {[
+              '不知道从哪里开始',
+              '任务太难',
+              '没时间',
+              '不知道学习什么',
+              '不想继续这个目标',
+            ].map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  setHelpOpen(false);
+                  alert('这个功能还在做，先去歇一下吧 ✨');
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:bg-muted/30 text-sm"
+              >
+                {opt}
+              </button>
+            ))}
             <button
               type="button"
-              onClick={() => setExpanded(false)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setHelpOpen(false)}
+              className="w-full text-center py-3 text-sm text-muted-foreground"
             >
-              收起 ▲
+              取消
             </button>
           </div>
-
-          {Object.values(groupedByGoal).map(({ bundle, tasks }) => (
-            <section key={bundle.goal.id} className="rounded-lg border border-border p-4 space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-medium">{bundle.goal.title}</h3>
-                <span className="text-xs text-muted-foreground">
-                  {tasks.length} 件待办 · {bundle.stage.name}
-                </span>
-              </div>
-              {tasks.length === 0 ? (
-                <p className="text-xs text-muted-foreground">当前阶段没有待办任务</p>
-              ) : (
-                <ul className="space-y-2">
-                  {tasks.map((t) => (
-                    <TaskItem key={t.id} task={t} />
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
         </div>
       )}
     </div>
