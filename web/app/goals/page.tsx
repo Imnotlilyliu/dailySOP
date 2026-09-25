@@ -76,22 +76,24 @@ export default function GoalsPage() {
         </section>
       )}
 
-      <section>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3">
-          已有目标（{goals.length}）
-        </h2>
-        {goals.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">
-            还没有目标。用上面的输入框写一句话，AI 帮你整理。
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {goals.map((g) => (
-              <GoalItem key={g.id} goal={g} onChanged={reload} />
-            ))}
-          </ul>
-        )}
-      </section>
+      {!wizardOpen && (
+        <section>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">
+            已有目标（{goals.length}）
+          </h2>
+          {goals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              还没有目标。用上面的输入框写一句话，AI 帮你整理。
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {goals.map((g) => (
+                <GoalItem key={g.id} goal={g} onChanged={reload} />
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 }
