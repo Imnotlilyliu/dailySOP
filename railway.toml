@@ -1,5 +1,5 @@
 [build]
-buildCommand = "npm install --no-audit --no-fund"
+builder = "nixpacks"
 
 [deploy]
 startCommand = "chmod +x start.sh && bash start.sh"
