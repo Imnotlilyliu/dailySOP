@@ -3,18 +3,18 @@
 import { useEffect, useState } from 'react';
 import { api, type Goal, type Stage, type LearningPath } from "@/lib/api";
 
+interface GoalRoute {
+  goal: Goal;
+  stages: Stage[];
+  currentStage: Stage | null;
+  learningPathsByStage: Record<string, LearningPath[]>;
+}
+
 type RouteResult =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "no-goal" }
-  | { kind: "no-stages"; goal: Goal }
-  | {
-      kind: "ok";
-      goal: Goal;
-      stages: Stage[];
-      currentStage: Stage;
-      learningPaths: LearningPath[];
-    };
+  | { kind: "ok"; goalRoutes: GoalRoute[] };
 
 async function loadData(): Promise<Exclude<RouteResult, { kind: "loading" }>> {
   try {
@@ -22,34 +22,48 @@ async function loadData(): Promise<Exclude<RouteResult, { kind: "loading" }>> {
     const activeGoals = goals.filter((g) => g.status === "active");
     if (activeGoals.length === 0) return { kind: "no-goal" };
 
-    const goal = activeGoals[0];
-    const { stages } = await api.get<{ stages: Stage[] }>(
-      `/api/goals/${goal.id}/stages`,
-    );
-    if (stages.length === 0) return { kind: "no-stages", goal };
+    const goalRoutes: GoalRoute[] = [];
 
-    const currentStage =
-      stages.find((s) => s.id === goal.currentStageId) ??
-      stages.find((s) => s.status === "in_progress") ??
-      stages[0];
+    for (const goal of activeGoals) {
+      const { stages } = await api.get<{ stages: Stage[] }>(
+        `/api/goals/${goal.id}/stages`,
+      );
+      if (stages.length === 0) {
+        goalRoutes.push({
+          goal,
+          stages: [],
+          currentStage: null,
+          learningPathsByStage: {},
+        });
+        continue;
+      }
 
-    let learningPaths: LearningPath[] = [];
-    try {
-      const { learningPaths: lp } = await api.get<{
-        learningPaths: LearningPath[];
-      }>(`/api/stages/${currentStage.id}/learning-paths`);
-      learningPaths = lp;
-    } catch {
-      // learning paths 可能为空，忽略错误
+      const currentStage =
+        stages.find((s) => s.id === goal.currentStageId) ??
+        stages.find((s) => s.status === "in_progress") ??
+        stages[0];
+
+      const learningPathsByStage: Record<string, LearningPath[]> = {};
+      for (const stage of stages) {
+        try {
+          const { learningPaths: lp } = await api.get<{ learningPaths: LearningPath[] }>(
+            `/api/stages/${stage.id}/learning-paths`,
+          );
+          learningPathsByStage[stage.id] = lp;
+        } catch {
+          learningPathsByStage[stage.id] = [];
+        }
+      }
+
+      goalRoutes.push({
+        goal,
+        stages,
+        currentStage,
+        learningPathsByStage,
+      });
     }
 
-    return {
-      kind: "ok",
-      goal,
-      stages,
-      currentStage,
-      learningPaths,
-    };
+    return { kind: "ok", goalRoutes };
   } catch (e) {
     return { kind: "error", message: (e as Error).message };
   }
@@ -101,101 +115,106 @@ export default function RoutePage() {
     );
   }
 
-  if (state.kind === "no-stages") {
-    return (
-      <div className="text-center py-16">
-        <h1 className="text-2xl font-semibold mb-3">{state.goal.title}</h1>
-        <p className="text-muted-foreground mb-8">
-          这个目标还没有拆解阶段。去「目标」页生成 Stages。
-        </p>
-        <a
-          href="/goals"
-          className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium"
-        >
-          生成 Stages
-        </a>
-      </div>
-    );
-  }
-
-  const { goal, stages, currentStage, learningPaths } = state;
-  const currentIndex = stages.findIndex((s) => s.id === currentStage.id);
-  const overallProgress = Math.round(
-    (stages.filter((s) => s.status === "completed").length / stages.length) * 100,
-  );
+  const { goalRoutes } = state;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold">路线图</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {goal.title} · 总进度 {overallProgress}%
+          共 {goalRoutes.length} 个进行中的目标
         </p>
       </header>
 
-      <section>
-        <ol className="relative border-l border-border ml-2 space-y-6">
-          {stages.map((stage, i) => {
-            const isCurrent = stage.id === currentStage.id;
-            return (
-              <li key={stage.id} className="ml-6 relative">
-                <span
-                  className={`absolute -left-[2.05rem] flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                    stage.status === "completed"
-                      ? "bg-accent text-white"
-                      : stage.status === "in_progress"
-                        ? "bg-accent text-white"
-                        : "bg-background border border-border text-muted-foreground"
-                  }`}
-                >
-                  {STATUS_SYMBOL[stage.status]}
-                </span>
-                <div className={`${isCurrent ? "p-3 rounded-lg border border-accent/40 bg-accent/5" : ""}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-base font-medium">{stage.name}</h3>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {STATUS_LABEL[stage.status]}
-                      {stage.durationDays && ` · ${stage.durationDays}天`}
-                    </span>
-                  </div>
-                  {stage.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {stage.description}
-                    </p>
-                  )}
+      {goalRoutes.map(({ goal, stages, currentStage, learningPathsByStage }) => {
+        const completedCount = stages.filter((s) => s.status === "completed").length;
+        const overallProgress = stages.length > 0
+          ? Math.round((completedCount / stages.length) * 100)
+          : 0;
 
-                  {isCurrent && learningPaths.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-2">
-                        当前阶段学习路径：
-                      </p>
-                      <ul className="space-y-1 text-sm">
-                        {learningPaths.map((lp) => (
-                          <li key={lp.id} className="flex items-start gap-2">
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground mt-0.5">
-                              {lp.type}
-                            </span>
-                            <span>{lp.title}</span>
-                            {lp.sourceType === "ai" && (
-                              <span className="text-xs text-accent">AI</span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+        return (
+          <section key={goal.id} className="rounded-xl border border-border p-4">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-semibold">{goal.title}</h2>
+                {goal.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {goal.description}
+                  </p>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {completedCount}/{stages.length} 阶段 · {overallProgress}%
+              </span>
+            </div>
 
-                  {isCurrent && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      当前 Stage（{i + 1}/{stages.length}）
-                    </p>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+            {stages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                这个目标还没有拆解阶段，去「目标」页设置。
+              </p>
+            ) : (
+              <ol className="relative border-l border-border ml-2 space-y-5">
+                {stages.map((stage, i) => {
+                  const isCurrent = currentStage?.id === stage.id;
+                  const lps = learningPathsByStage[stage.id] ?? [];
+                  return (
+                    <li key={stage.id} className="ml-6 relative">
+                      <span
+                        className={`absolute -left-[2.05rem] flex h-5 w-5 items-center justify-center rounded-full text-xs ${
+                          stage.status === "completed"
+                            ? "bg-accent text-white"
+                            : stage.status === "in_progress"
+                              ? "bg-accent text-white"
+                              : "bg-background border border-border text-muted-foreground"
+                        }`}
+                      >
+                        {STATUS_SYMBOL[stage.status]}
+                      </span>
+                      <div className={`${isCurrent ? "p-3 rounded-lg border border-accent/40 bg-accent/5" : ""}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-sm font-medium">
+                            {i + 1}. {stage.name}
+                          </h3>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {STATUS_LABEL[stage.status]}
+                            {stage.durationDays && ` · ${stage.durationDays}天`}
+                          </span>
+                        </div>
+                        {stage.description && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {stage.description}
+                          </p>
+                        )}
+
+                        {isCurrent && lps.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <p className="text-xs text-muted-foreground mb-2">
+                              当前阶段学习路径：
+                            </p>
+                            <ul className="space-y-1 text-sm">
+                              {lps.map((lp) => (
+                                <li key={lp.id} className="flex items-start gap-2">
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground mt-0.5">
+                                    {lp.type}
+                                  </span>
+                                  <span>{lp.title}</span>
+                                  {lp.sourceType === "ai" && (
+                                    <span className="text-xs text-accent">AI</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { api, getStoredToken, type Goal, type Stage, type Task, type DailySop } from '@/lib/api';
+import {
+  api,
+  getStoredToken,
+  type Goal,
+  type Stage,
+  type Task,
+  type DailySop,
+  type AiMinimumActionResult,
+} from '@/lib/api';
 import { TaskItem } from '@/components/TaskItem';
 
 interface GoalBundle {
@@ -54,7 +62,7 @@ async function loadData(): Promise<LoadResult> {
             stageId: current.id,
           });
         } catch {
-          // 忽略，sop 可能不需要
+          // 忽略
         }
       }
 
@@ -73,9 +81,14 @@ async function loadData(): Promise<LoadResult> {
 export default function HomePage() {
   const [state, setState] = useState<LoadResult>({ kind: 'loading' });
   const [expanded, setExpanded] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [minimumAction, setMinimumAction] = useState<AiMinimumActionResult | null>(null);
 
   const reload = useCallback(async () => {
     setState({ kind: 'loading' });
+    setMinimumAction(null);
+    setExpanded(false);
     setState(await loadData());
   }, []);
 
@@ -86,6 +99,76 @@ export default function HomePage() {
     }
     reload();
   }, [reload]);
+
+  // AI 选最小动作 — 等数据加载完 + 有 pending tasks 时触发
+  useEffect(() => {
+    if (state.kind !== 'ok') return;
+    if (minimumAction) return;
+
+    const allPendingIds: string[] = [];
+    let firstStageId: string | null = null;
+    for (const b of state.bundles) {
+      for (const t of b.tasks) {
+        if (t.status === 'pending') {
+          allPendingIds.push(t.id);
+          if (!firstStageId) firstStageId = b.stage.id;
+        }
+      }
+    }
+
+    if (allPendingIds.length === 0) return;
+
+    setAiLoading(true);
+    setAiError(null);
+
+    const payload: any = {
+      date: state.today,
+      candidateTaskIds: allPendingIds,
+    };
+    if (firstStageId) payload.stageId = firstStageId;
+
+    api
+      .post<AiMinimumActionResult>('/api/ai/minimum-action/generate', payload)
+      .then((res) => {
+        setMinimumAction(res);
+      })
+      .catch((e) => {
+        setAiError((e as Error).message);
+      })
+      .finally(() => {
+        setAiLoading(false);
+      });
+  }, [state, minimumAction]);
+
+  async function regenerate() {
+    if (state.kind !== 'ok') return;
+    const allPendingIds: string[] = [];
+    let firstStageId: string | null = null;
+    for (const b of state.bundles) {
+      for (const t of b.tasks) {
+        if (t.status === 'pending') {
+          allPendingIds.push(t.id);
+          if (!firstStageId) firstStageId = b.stage.id;
+        }
+      }
+    }
+    if (allPendingIds.length === 0) return;
+    setAiLoading(true);
+    setAiError(null);
+    const payload: any = { date: state.today, candidateTaskIds: allPendingIds };
+    if (firstStageId) payload.stageId = firstStageId;
+    try {
+      const res = await api.post<AiMinimumActionResult>(
+        '/api/ai/minimum-action/generate',
+        payload,
+      );
+      setMinimumAction(res);
+    } catch (e) {
+      setAiError((e as Error).message);
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   if (state.kind === 'loading') {
     return <div className="text-center py-12 text-muted-foreground">加载中...</div>;
@@ -145,11 +228,12 @@ export default function HomePage() {
     groupedByGoal[b.goal.id] = { bundle: b, tasks: b.tasks.filter((t) => t.status === 'pending') };
   }
 
-  const minimumActionTask = allPending.length > 0
-    ? allPending.reduce((prev, cur) => cur.task.estimatedMinutes < prev.task.estimatedMinutes ? cur : prev)
+  const minimumActionTask = minimumAction
+    ? allPending.find((x) => x.task.id === minimumAction.taskId)
     : null;
 
   const totalPendingMinutes = allPending.reduce((s, x) => s + x.task.estimatedMinutes, 0);
+  const allDone = allPending.length === 0;
 
   return (
     <div className="space-y-6">
@@ -159,39 +243,78 @@ export default function HomePage() {
       </header>
 
       {/* 最小动作卡片 — 默认显示 */}
-      <section
-        className="rounded-xl border border-accent/40 bg-accent/5 p-4 cursor-pointer transition-colors hover:bg-accent/10"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">今日只做这一件事</p>
-            {minimumActionTask ? (
-              <>
-                <p className="text-lg font-medium mt-1">{minimumActionTask.task.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {minimumActionTask.bundle.goal.title} · {minimumActionTask.task.estimatedMinutes}分钟
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-base font-medium mt-1">今天的任务都完成啦 🎉</p>
-                <p className="text-xs text-muted-foreground mt-1">休息一下，或者去「目标」页加一个新目标。</p>
-              </>
+      <section className="rounded-xl border border-accent/40 bg-accent/5 p-4">
+        <p className="text-xs text-muted-foreground">今日只做这一件事</p>
+
+        {allDone ? (
+          <>
+            <p className="text-lg font-medium mt-2">今天的任务都完成啦 🎉</p>
+            <p className="text-xs text-muted-foreground mt-1">休息一下，或者去「目标」页加一个新目标。</p>
+          </>
+        ) : aiLoading ? (
+          <p className="text-sm text-muted-foreground mt-2">AI 正在帮你挑一件先做的...</p>
+        ) : aiError ? (
+          <>
+            <p className="text-sm text-red-500 mt-2">AI 不可用：{aiError}</p>
+            <button
+              type="button"
+              onClick={regenerate}
+              className="mt-2 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
+            >
+              重试
+            </button>
+          </>
+        ) : minimumAction ? (
+          <>
+            <p className="text-lg font-medium mt-2">{minimumAction.title}</p>
+            {minimumAction.description && (
+              <p className="text-xs text-muted-foreground mt-1">{minimumAction.description}</p>
             )}
-          </div>
-          <span className="text-xs text-muted-foreground shrink-0">
-            {expanded ? '收起 ▲' : '开始 ▼'}
-          </span>
-        </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              预计 {minimumAction.estimatedMinutes} 分钟
+              {minimumActionTask && (
+                <> · {minimumActionTask.bundle.goal.title}</>
+              )}
+            </p>
+
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="rounded-full bg-primary text-primary-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90"
+              >
+                开始 →
+              </button>
+              <button
+                type="button"
+                onClick={regenerate}
+                disabled={aiLoading}
+                className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+              >
+                换一个
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground mt-2">准备中...</p>
+        )}
       </section>
 
-      {/* 完整 SOP — 点击后展开 */}
-      {expanded && (
+      {/* 完整 SOP — 点击开始后展开 */}
+      {expanded && !allDone && (
         <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            今日 SOP · 共 {allPending.length} 件事 · 约 {totalPendingMinutes} 分钟
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              今日 SOP · 共 {allPending.length} 件事 · 约 {totalPendingMinutes} 分钟
+            </p>
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              收起 ▲
+            </button>
+          </div>
 
           {Object.values(groupedByGoal).map(({ bundle, tasks }) => (
             <section key={bundle.goal.id} className="rounded-lg border border-border p-4 space-y-2">
