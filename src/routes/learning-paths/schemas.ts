@@ -21,14 +21,14 @@ export const LearningPathSchema = z.object({
 export const CreateLearningPathRequestSchema = z.object({
   title: z.string().min(1).max(200),
   type: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   orderIndex: z.number().int().min(0),
 });
 
 export const UpdateLearningPathRequestSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   type: z.string().min(1).optional(),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   orderIndex: z.number().int().min(0).optional(),
 });
 

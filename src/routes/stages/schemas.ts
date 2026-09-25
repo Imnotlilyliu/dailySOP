@@ -23,20 +23,20 @@ export const StageSchema = z.object({
 
 export const CreateStageRequestSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   orderIndex: z.number().int().min(0),
-  durationDays: z.number().int().positive().optional(),
-  startDate: TimestamptzStringSchema.optional(),
-  endDate: TimestamptzStringSchema.optional(),
+  durationDays: z.number().int().positive().nullish(),
+  startDate: TimestamptzStringSchema.nullish(),
+  endDate: TimestamptzStringSchema.nullish(),
 });
 
 export const UpdateStageRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   orderIndex: z.number().int().min(0).optional(),
-  durationDays: z.number().int().positive().optional(),
-  startDate: TimestamptzStringSchema.optional(),
-  endDate: TimestamptzStringSchema.optional(),
+  durationDays: z.number().int().positive().nullish(),
+  startDate: TimestamptzStringSchema.nullish(),
+  endDate: TimestamptzStringSchema.nullish(),
 });
 
 export const CompleteStageResponseSchema = z.object({

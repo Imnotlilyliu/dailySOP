@@ -21,9 +21,9 @@ export const TaskSchema = z.object({
 });
 
 export const CreateTaskRequestSchema = z.object({
-  learningPathId: z.string().uuid().optional(),
+  learningPathId: z.string().uuid().nullish(),
   title: z.string().min(1).max(200),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   estimatedMinutes: z.number().int().positive(),
   orderIndex: z.number().int().min(0),
 });
@@ -31,7 +31,7 @@ export const CreateTaskRequestSchema = z.object({
 export const UpdateTaskRequestSchema = z.object({
   learningPathId: z.string().uuid().nullable().optional(),
   title: z.string().min(1).max(200).optional(),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   estimatedMinutes: z.number().int().positive().optional(),
   orderIndex: z.number().int().min(0).optional(),
 });

@@ -48,7 +48,7 @@ export const MinimumActionSchema = z.object({
 export const CreateMinimumActionRequestSchema = z.object({
   taskId: z.string().uuid(),
   title: z.string().min(1).max(200),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   estimatedMinutes: z.number().int().positive(),
 });
 

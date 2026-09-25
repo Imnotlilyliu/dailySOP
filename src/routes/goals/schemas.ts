@@ -43,18 +43,18 @@ export const GoalSchema = z.object({
 
 export const CreateGoalRequestSchema = z.object({
   title: GoalTitleSchema,
-  description: z.string().optional(),
-  expectedOutcome: z.string().optional(),
-  startDate: TimestamptzStringSchema.optional(),
-  targetDate: TimestamptzStringSchema.optional(),
+  description: z.string().nullish(),
+  expectedOutcome: z.string().nullish(),
+  startDate: TimestamptzStringSchema.nullish(),
+  targetDate: TimestamptzStringSchema.nullish(),
 });
 
 export const UpdateGoalRequestSchema = z.object({
   title: GoalTitleSchema.optional(),
-  description: z.string().optional(),
-  expectedOutcome: z.string().optional(),
-  startDate: TimestamptzStringSchema.optional(),
-  targetDate: TimestamptzStringSchema.optional(),
+  description: z.string().nullish(),
+  expectedOutcome: z.string().nullish(),
+  startDate: TimestamptzStringSchema.nullish(),
+  targetDate: TimestamptzStringSchema.nullish(),
   currentStageId: z.string().nullable().optional(),
 });
 
