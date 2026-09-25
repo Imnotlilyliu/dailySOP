@@ -98,14 +98,14 @@ export function GoalWizard({ onComplete, onCancel }: { onComplete: () => void; o
     setLoading(true);
     setError(null);
     try {
-      const created = await api.post<{ id: string }>("/api/goals", {
+      const created = await api.post<{ goal: { id: string } }>("/api/goals", {
         title: parsedGoal.title,
         description: parsedGoal.description,
         expectedOutcome: parsedGoal.expectedOutcome,
       });
-      setPersistedGoal({ id: created.id, title: parsedGoal.title });
+      setPersistedGoal({ id: created.goal.id, title: parsedGoal.title });
       setStep(2);
-      await generateStages(created.id);
+      await generateStages(created.goal.id);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -138,13 +138,13 @@ export function GoalWizard({ onComplete, onCancel }: { onComplete: () => void; o
     try {
       const created: PersistedStage[] = [];
       for (const s of parsedStages) {
-        const r = await api.post<{ id: string }>(`/api/goals/${persistedGoal.id}/stages`, {
+        const r = await api.post<{ stage: { id: string } }>(`/api/goals/${persistedGoal.id}/stages`, {
           name: s.name,
           description: s.description,
           orderIndex: s.orderIndex,
           durationDays: s.durationDays,
         });
-        created.push({ id: r.id, name: s.name, orderIndex: s.orderIndex });
+        created.push({ id: r.stage.id, name: s.name, orderIndex: s.orderIndex });
       }
       setPersistedStages(created);
       setStep(3);
@@ -180,13 +180,13 @@ export function GoalWizard({ onComplete, onCancel }: { onComplete: () => void; o
     try {
       const ids: string[] = [];
       for (const lp of learningPaths) {
-        const r = await api.post<{ id: string }>(`/api/stages/${firstStageId}/learning-paths`, {
+        const r = await api.post<{ learningPath: { id: string } }>(`/api/stages/${firstStageId}/learning-paths`, {
           title: lp.title,
           type: lp.type,
           description: lp.description,
           orderIndex: lp.orderIndex,
         });
-        ids.push(r.id);
+        ids.push(r.learningPath.id);
       }
       setPersistedLearningPathIds(ids);
       setStep(4);
