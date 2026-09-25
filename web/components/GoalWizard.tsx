@@ -438,21 +438,6 @@ export function GoalWizard({ onComplete, onCancel }: { onComplete: () => void; o
             rows={5}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent font-mono"
           />
-          {learningPaths.length > 0 && (
-            <div className="p-3 rounded-lg border border-accent/40 bg-accent/5">
-              <p className="text-xs text-muted-foreground mb-2">产品将按以下学习路径记录（你自己决定的）：</p>
-              <ul className="space-y-1 text-sm">
-                {learningPaths.map((lp) => (
-                  <li key={lp.orderIndex} className="flex items-center gap-2">
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                      {lp.orderIndex + 1}
-                    </span>
-                    <span>{lp.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
           <div className="flex justify-between gap-2">
             <button
               type="button"
